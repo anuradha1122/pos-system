@@ -19,6 +19,8 @@ class StoreSaleRequest extends FormRequest
             'discount' => ['nullable', 'numeric', 'min:0'],
             'tax' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string'],
+            'paid_amount' => ['nullable', 'numeric', 'min:0'],
+            'payment_method' => ['nullable', 'in:cash,card,bank,credit'],
 
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:products,id'],

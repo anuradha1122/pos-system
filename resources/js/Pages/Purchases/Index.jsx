@@ -45,8 +45,11 @@ export default function Index({ purchases, suppliers, filters }) {
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
                     <div className="rounded-xl bg-white p-6 shadow">
+
+                        {/* FILTERS */}
                         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                             <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-4">
+
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-gray-700">
                                         Search
@@ -117,8 +120,10 @@ export default function Index({ purchases, suppliers, filters }) {
                             </Link>
                         </div>
 
+                        {/* TABLE */}
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
+
                                 <thead>
                                     <tr className="bg-gray-50">
                                         <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
@@ -142,6 +147,15 @@ export default function Index({ purchases, suppliers, filters }) {
                                         <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
                                             Total
                                         </th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                            Paid
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                            Balance
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                            Status
+                                        </th>
                                         <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
                                             Actions
                                         </th>
@@ -152,21 +166,57 @@ export default function Index({ purchases, suppliers, filters }) {
                                     {purchases.data.length > 0 ? (
                                         purchases.data.map((purchase) => (
                                             <tr key={purchase.id}>
-                                                <td className="px-4 py-3">{purchase.purchase_no}</td>
-                                                <td className="px-4 py-3">{purchase.invoice_no ?? '-'}</td>
-                                                <td className="px-4 py-3">{purchase.purchase_date}</td>
+
+                                                <td className="px-4 py-3">
+                                                    {purchase.purchase_no ?? purchase.id}
+                                                </td>
+
+                                                <td className="px-4 py-3">
+                                                    {purchase.invoice_no ?? '-'}
+                                                </td>
+
+                                                <td className="px-4 py-3">
+                                                    {purchase.purchase_date}
+                                                </td>
+
                                                 <td className="px-4 py-3">
                                                     {purchase.supplier?.name ?? '-'}
                                                 </td>
+
                                                 <td className="px-4 py-3">
                                                     {purchase.branch?.name ?? '-'}
                                                 </td>
+
                                                 <td className="px-4 py-3">
                                                     {purchase.creator?.name ?? '-'}
                                                 </td>
+
                                                 <td className="px-4 py-3 font-medium">
-                                                    {Number(purchase.grand_total).toFixed(2)}
+                                                    {Number(purchase.total_amount).toFixed(2)}
                                                 </td>
+
+                                                <td className="px-4 py-3">
+                                                    {Number(purchase.paid_amount ?? 0).toFixed(2)}
+                                                </td>
+
+                                                <td className="px-4 py-3">
+                                                    {Number(purchase.balance_amount ?? 0).toFixed(2)}
+                                                </td>
+
+                                                <td className="px-4 py-3">
+                                                    <span
+                                                        className={`rounded px-2 py-1 text-xs font-medium ${
+                                                            purchase.payment_status === 'paid'
+                                                                ? 'bg-green-100 text-green-700'
+                                                                : purchase.payment_status === 'partial'
+                                                                ? 'bg-yellow-100 text-yellow-700'
+                                                                : 'bg-red-100 text-red-700'
+                                                        }`}
+                                                    >
+                                                        {purchase.payment_status ?? 'credit'}
+                                                    </span>
+                                                </td>
+
                                                 <td className="px-4 py-3 text-right">
                                                     <Link
                                                         href={route('purchases.show', purchase.id)}
@@ -175,12 +225,13 @@ export default function Index({ purchases, suppliers, filters }) {
                                                         View
                                                     </Link>
                                                 </td>
+
                                             </tr>
                                         ))
                                     ) : (
                                         <tr>
                                             <td
-                                                colSpan="8"
+                                                colSpan="11"
                                                 className="px-4 py-6 text-center text-sm text-gray-500"
                                             >
                                                 No purchases found.
@@ -191,6 +242,7 @@ export default function Index({ purchases, suppliers, filters }) {
                             </table>
                         </div>
 
+                        {/* PAGINATION */}
                         {purchases.links && (
                             <div className="mt-4 flex flex-wrap gap-2">
                                 {purchases.links.map((link, index) => (
@@ -209,6 +261,7 @@ export default function Index({ purchases, suppliers, filters }) {
                                 ))}
                             </div>
                         )}
+
                     </div>
                 </div>
             </div>

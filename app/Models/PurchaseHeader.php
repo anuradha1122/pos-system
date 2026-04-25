@@ -19,6 +19,9 @@ class PurchaseHeader extends Model
         'tax',
         'grand_total',
         'notes',
+        'paid_amount',
+        'balance_amount',
+        'payment_status',
         'created_by',
     ];
 

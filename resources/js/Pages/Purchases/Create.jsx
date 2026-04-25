@@ -214,6 +214,37 @@ export default function Create({ auth, branches, suppliers, products }) {
                             Total: {totalAmount.toFixed(2)}
                         </div>
 
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div>
+                                <label className="mb-1 block text-sm font-medium">Paid Amount</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={data.paid_amount}
+                                    onChange={(e) => setData('paid_amount', e.target.value)}
+                                    className="w-full rounded border-gray-300"
+                                    placeholder="0.00"
+                                />
+                                {errors.paid_amount && (
+                                    <div className="mt-1 text-sm text-red-600">{errors.paid_amount}</div>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-sm font-medium">Payment Method</label>
+                                <select
+                                    value={data.payment_method}
+                                    onChange={(e) => setData('payment_method', e.target.value)}
+                                    className="w-full rounded border-gray-300"
+                                >
+                                    <option value="cash">Cash</option>
+                                    <option value="card">Card</option>
+                                    <option value="bank">Bank</option>
+                                    <option value="credit">Credit</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div className="flex items-center gap-3">
                             <button
                                 type="submit"

@@ -2,6 +2,14 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-LK', {
+        style: 'currency',
+        currency: 'LKR',
+        maximumFractionDigits: 2,
+    }).format(Number(amount || 0));
+}
+
 export default function Sales({ sales, customers, branches, summary, filters }) {
     const { auth } = usePage().props;
 
@@ -9,6 +17,13 @@ export default function Sales({ sales, customers, branches, summary, filters }) 
     const [dateTo, setDateTo] = useState(filters.date_to ?? '');
     const [customerId, setCustomerId] = useState(filters.customer_id ?? '');
     const [branchId, setBranchId] = useState(filters.branch_id ?? '');
+
+    const exportParams = {
+        date_from: dateFrom,
+        date_to: dateTo,
+        customer_id: customerId,
+        branch_id: branchId,
+    };
 
     const applyFilters = () => {
         router.get(
@@ -47,21 +62,33 @@ export default function Sales({ sales, customers, branches, summary, filters }) 
 
             <div className="py-6 print:py-0">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8 print:max-w-full print:px-0">
-                    <div className="flex items-center justify-between print:hidden">
-                        <div className="text-sm text-gray-500">
-                            Filter sales by date, customer, and branch
+                    <div className="rounded-xl bg-white p-6 shadow print:hidden">
+                        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-900">Filters</h3>
+                                <p className="text-sm text-gray-500">
+                                    Filter sales by date, customer, and branch.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-wrap gap-3">
+                                <a
+                                    href={route('reports.sales.export', exportParams)}
+                                    className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                                >
+                                    Export Excel
+                                </a>
+
+                                <button
+                                    type="button"
+                                    onClick={() => window.print()}
+                                    className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                                >
+                                    Print Report
+                                </button>
+                            </div>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={() => window.print()}
-                            className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white"
-                        >
-                            Print Report
-                        </button>
-                    </div>
-
-                    <div className="rounded-xl bg-white p-6 shadow print:hidden">
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
                             <div>
                                 <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -127,7 +154,7 @@ export default function Sales({ sales, customers, branches, summary, filters }) 
                                 <button
                                     type="button"
                                     onClick={applyFilters}
-                                    className="rounded-lg bg-slate-900 px-4 py-2 text-white"
+                                    className="rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800"
                                 >
                                     Filter
                                 </button>
@@ -135,7 +162,7 @@ export default function Sales({ sales, customers, branches, summary, filters }) 
                                 <button
                                     type="button"
                                     onClick={resetFilters}
-                                    className="rounded-lg border border-gray-300 px-4 py-2"
+                                    className="rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-50"
                                 >
                                     Reset
                                 </button>
@@ -154,7 +181,7 @@ export default function Sales({ sales, customers, branches, summary, filters }) 
                         <div className="rounded-xl bg-white p-6 shadow">
                             <div className="text-sm text-gray-500">Total Sales Amount</div>
                             <div className="mt-2 text-3xl font-bold text-slate-900">
-                                {Number(summary.total_amount).toFixed(2)}
+                                {formatCurrency(summary.total_amount)}
                             </div>
                         </div>
                     </div>
@@ -213,7 +240,7 @@ export default function Sales({ sales, customers, branches, summary, filters }) 
                                                     {sale.creator?.name ?? '-'}
                                                 </td>
                                                 <td className="px-4 py-3 text-right font-medium">
-                                                    {Number(sale.grand_total).toFixed(2)}
+                                                    {formatCurrency(sale.grand_total)}
                                                 </td>
                                                 <td className="px-4 py-3 text-right print:hidden">
                                                     <Link

@@ -16,6 +16,11 @@ use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SaleReturnController;
+use App\Http\Controllers\PurchaseReturnController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\CustomerCreditController;
+use App\Http\Controllers\SupplierCreditController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
 // Route::get('/', function () {
@@ -137,6 +142,43 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reports/sales', [ReportController::class, 'sales'])->name('reports.sales');
     Route::get('/reports/low-stock', [ReportController::class, 'lowStock'])
     ->name('reports.low-stock');
+    Route::get('/reports/profit', [ReportController::class, 'profit'])
+    ->name('reports.profit');
+
+    Route::get('/reports/profit/export', [ReportController::class, 'profitExport'])
+    ->name('reports.profit.export');
+    Route::get('/reports/sales/export', [ReportController::class, 'salesExport'])
+    ->name('reports.sales.export');
+    Route::get('/reports/stock-movements/export', [ReportController::class, 'stockMovementsExport'])
+    ->name('reports.stock-movements.export');
+    Route::get('/reports/low-stock/export', [ReportController::class, 'lowStockExport'])
+    ->name('reports.low-stock.export');
+    Route::resource('sale-returns', SaleReturnController::class)
+    ->only(['index', 'create', 'store', 'show']);
+
+    Route::resource('purchase-returns', PurchaseReturnController::class)
+        ->only(['index', 'create', 'store', 'show']);
+
+    Route::resource('payments', PaymentController::class)
+        ->only(['index', 'create', 'store']);
+
+    Route::get('/customer-credits', [CustomerCreditController::class, 'index'])
+        ->name('customer-credits.index');
+
+    Route::get('/customer-credits/{customer}', [CustomerCreditController::class, 'show'])
+        ->name('customer-credits.show');
+
+    Route::post('/customer-credits/receive-payment', [CustomerCreditController::class, 'receivePayment'])
+        ->name('customer-credits.receive-payment');
+
+    Route::get('/supplier-credits', [SupplierCreditController::class, 'index'])
+        ->name('supplier-credits.index');
+
+    Route::get('/supplier-credits/{supplier}', [SupplierCreditController::class, 'show'])
+        ->name('supplier-credits.show');
+
+    Route::post('/supplier-credits/make-payment', [SupplierCreditController::class, 'makePayment'])
+        ->name('supplier-credits.make-payment');
 
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->name('logout');

@@ -3,6 +3,7 @@
 namespace App\Services\Sale;
 
 use App\Models\BranchProductStock;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\SaleHeader;
 use App\Models\StockMovement;
@@ -67,6 +68,28 @@ class SaleService
                 ]);
             }
 
+            $paidAmount = (float) ($data['paid_amount'] ?? 0);
+
+            if ($paidAmount < 0) {
+                throw ValidationException::withMessages([
+                    'paid_amount' => 'Paid amount cannot be negative.',
+                ]);
+            }
+
+            if ($paidAmount > $grandTotal) {
+                throw ValidationException::withMessages([
+                    'paid_amount' => 'Paid amount cannot exceed grand total.',
+                ]);
+            }
+
+            $balanceAmount = $grandTotal - $paidAmount;
+
+            $paymentStatus = match (true) {
+                $paidAmount >= $grandTotal && $grandTotal > 0 => 'paid',
+                $paidAmount > 0 => 'partial',
+                default => 'credit',
+            };
+
             $sale = SaleHeader::create([
                 'invoice_no' => $this->generateInvoiceNo(),
                 'branch_id' => $branchId,
@@ -76,6 +99,9 @@ class SaleService
                 'discount' => $discount,
                 'tax' => $tax,
                 'grand_total' => $grandTotal,
+                'paid_amount' => $paidAmount,
+                'balance_amount' => $balanceAmount,
+                'payment_status' => $paymentStatus,
                 'notes' => $data['notes'] ?? null,
                 'created_by' => $user->id,
             ]);
@@ -113,6 +139,19 @@ class SaleService
                     'reference_type' => SaleHeader::class,
                     'reference_id' => $sale->id,
                     'note' => 'Sale invoice: ' . $sale->invoice_no,
+                    'created_by' => $user->id,
+                ]);
+            }
+
+            if ($paidAmount > 0) {
+                Payment::create([
+                    'reference_type' => 'sale',
+                    'reference_id' => $sale->id,
+                    'branch_id' => $branchId,
+                    'type' => 'in',
+                    'amount' => $paidAmount,
+                    'method' => $data['payment_method'] ?? 'cash',
+                    'note' => 'Sale payment: ' . $sale->invoice_no,
                     'created_by' => $user->id,
                 ]);
             }

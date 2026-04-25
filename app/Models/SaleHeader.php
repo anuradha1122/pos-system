@@ -18,6 +18,9 @@ class SaleHeader extends Model
         'tax',
         'grand_total',
         'notes',
+        'paid_amount',
+        'balance_amount',
+        'payment_status',
         'created_by',
     ];
 
@@ -32,6 +35,11 @@ class SaleHeader extends Model
     public function items(): HasMany
     {
         return $this->hasMany(SaleItem::class, 'sale_header_id');
+    }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(SaleReturn::class, 'sale_header_id');
     }
 
     public function branch(): BelongsTo

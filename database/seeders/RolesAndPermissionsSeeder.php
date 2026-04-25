@@ -32,6 +32,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'product.create',
             'product.edit',
 
+            'supplier.view',
+            'supplier.create',
+            'supplier.edit',
+
             'category.view',
             'category.create',
             'category.edit',

@@ -12,15 +12,8 @@ export default function Index({ sales, customers, filters }) {
     const applyFilters = () => {
         router.get(
             route('sales.index'),
-            {
-                search,
-                date,
-                customer_id: customerId,
-            },
-            {
-                preserveState: true,
-                replace: true,
-            }
+            { search, date, customer_id: customerId },
+            { preserveState: true, replace: true }
         );
     };
 
@@ -139,6 +132,15 @@ export default function Index({ sales, customers, filters }) {
                                         <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
                                             Total
                                         </th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                            Paid
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                            Balance
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                            Status
+                                        </th>
                                         <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
                                             Actions
                                         </th>
@@ -163,6 +165,25 @@ export default function Index({ sales, customers, filters }) {
                                                 <td className="px-4 py-3 font-medium">
                                                     {Number(sale.grand_total).toFixed(2)}
                                                 </td>
+                                                <td className="px-4 py-3">
+                                                    {Number(sale.paid_amount ?? 0).toFixed(2)}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    {Number(sale.balance_amount ?? 0).toFixed(2)}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <span
+                                                        className={`rounded px-2 py-1 text-xs font-medium ${
+                                                            sale.payment_status === 'paid'
+                                                                ? 'bg-green-100 text-green-700'
+                                                                : sale.payment_status === 'partial'
+                                                                ? 'bg-yellow-100 text-yellow-700'
+                                                                : 'bg-red-100 text-red-700'
+                                                        }`}
+                                                    >
+                                                        {sale.payment_status ?? 'credit'}
+                                                    </span>
+                                                </td>
                                                 <td className="px-4 py-3 text-right">
                                                     <Link
                                                         href={route('sales.show', sale.id)}
@@ -176,7 +197,7 @@ export default function Index({ sales, customers, filters }) {
                                     ) : (
                                         <tr>
                                             <td
-                                                colSpan="7"
+                                                colSpan="10"
                                                 className="px-4 py-6 text-center text-sm text-gray-500"
                                             >
                                                 No sales found.

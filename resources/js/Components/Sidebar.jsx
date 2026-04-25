@@ -56,6 +56,13 @@ export default function Sidebar() {
                     Suppliers
                 </Link>
 
+                <Link
+                    href={route('supplier-credits.index')}
+                    className={linkClass(route().current('supplier-credits.*'))}
+                >
+                    Supplier Credits
+                </Link>
+
                 <div className={sectionTitleClass}>Inventory</div>
 
                 <Link
@@ -76,14 +83,42 @@ export default function Sidebar() {
                     Purchases
                 </Link>
 
+                <Link
+                    href={route('purchase-returns.index')}
+                    className={linkClass(route().current('purchase-returns.*'))}
+                >
+                    Purchase Returns
+                </Link>
+
+                <Link
+                    href={route('payments.index')}
+                    className={linkClass(route().current('payments.*'))}
+                >
+                    Payments
+                </Link>
+
                 <div className={sectionTitleClass}>Sales</div>
 
                 <Link href={route('customers.index')} className={linkClass(route().current('customers.*'))}>
                     Customers
                 </Link>
 
+                <Link
+                    href={route('customer-credits.index')}
+                    className={linkClass(route().current('customer-credits.*'))}
+                >
+                    Customer Credits
+                </Link>
+
                 <Link href={route('sales.index')} className={linkClass(route().current('sales.*'))}>
                     Sales
+                </Link>
+
+                <Link
+                    href={route('sale-returns.index')}
+                    className={linkClass(route().current('sale-returns.*'))}
+                >
+                    Sales Returns
                 </Link>
 
                 <div className={sectionTitleClass}>Reports</div>
@@ -97,6 +132,9 @@ export default function Sidebar() {
                 </Link>
                 <Link href={route('reports.low-stock')} className={linkClass(route().current('reports.low-stock'))}>
                     Low Stock
+                </Link>
+                <Link href={route('reports.profit')} className={linkClass(route().current('reports.profit'))}>
+                    Profit Report
                 </Link>
             </div>
         </aside>
