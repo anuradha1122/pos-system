@@ -10,12 +10,24 @@ class Payment extends Model
         'reference_type',
         'reference_id',
         'branch_id',
-        'type',
+        'type', // in / out
         'amount',
         'method',
+        'payment_date',
         'note',
         'created_by',
     ];
+
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'payment_date' => 'date',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
 
     public function branch()
     {
@@ -25,5 +37,37 @@ class Payment extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // Optional but VERY useful for receipts
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Helpers
+    |--------------------------------------------------------------------------
+    */
+
+    public function isIn(): bool
+    {
+        return $this->type === 'in';
+    }
+
+    public function isOut(): bool
+    {
+        return $this->type === 'out';
+    }
+
+    public function formattedAmount(): string
+    {
+        return number_format($this->amount, 2);
     }
 }

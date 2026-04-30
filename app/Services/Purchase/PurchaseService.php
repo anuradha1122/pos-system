@@ -3,6 +3,7 @@
 namespace App\Services\Purchase;
 
 use App\Models\BranchProductStock;
+use App\Models\CompanySetting;
 use App\Models\Payment;
 use App\Models\PurchaseHeader;
 use App\Models\PurchaseItem;
@@ -16,9 +17,21 @@ class PurchaseService
     public function create(array $data): PurchaseHeader
     {
         return DB::transaction(function () use ($data) {
-            $totalAmount = collect($data['items'])->sum(function ($item) {
+            $branchId = Auth::user()->branch_id;
+
+            if (!$branchId) {
+                throw ValidationException::withMessages([
+                    'branch_id' => 'Authenticated user is not assigned to a branch.',
+                ]);
+            }
+
+            $subtotal = collect($data['items'])->sum(function ($item) {
                 return (float) $item['quantity'] * (float) $item['cost_price'];
             });
+
+            $discount = 0;
+            $tax = 0;
+            $grandTotal = $subtotal - $discount + $tax;
 
             $paidAmount = (float) ($data['paid_amount'] ?? 0);
 
@@ -28,27 +41,34 @@ class PurchaseService
                 ]);
             }
 
-            if ($paidAmount > $totalAmount) {
+            if ($paidAmount > $grandTotal) {
                 throw ValidationException::withMessages([
                     'paid_amount' => 'Paid amount cannot exceed purchase total.',
                 ]);
             }
 
-            $balanceAmount = $totalAmount - $paidAmount;
+            $balanceAmount = $grandTotal - $paidAmount;
 
             $paymentStatus = match (true) {
-                $paidAmount >= $totalAmount && $totalAmount > 0 => 'paid',
+                $paidAmount >= $grandTotal && $grandTotal > 0 => 'paid',
                 $paidAmount > 0 => 'partial',
                 default => 'credit',
             };
 
             $purchase = PurchaseHeader::create([
-                'branch_id' => $data['branch_id'],
+                'purchase_no' => $this->generatePurchaseNo(),
+                'branch_id' => $branchId,
                 'supplier_id' => $data['supplier_id'],
                 'purchase_date' => $data['purchase_date'],
                 'invoice_no' => $data['invoice_no'] ?? null,
-                'note' => $data['note'] ?? null,
-                'total_amount' => $totalAmount,
+
+                'subtotal' => $subtotal,
+                'discount' => $discount,
+                'tax' => $tax,
+                'grand_total' => $grandTotal,
+
+                'notes' => $data['note'] ?? null,
+
                 'paid_amount' => $paidAmount,
                 'balance_amount' => $balanceAmount,
                 'payment_status' => $paymentStatus,
@@ -69,16 +89,17 @@ class PurchaseService
                 ]);
 
                 $stock = BranchProductStock::query()
-                    ->where('branch_id', $data['branch_id'])
+                    ->where('branch_id', $branchId)
                     ->where('product_id', $item['product_id'])
                     ->lockForUpdate()
                     ->first();
 
                 if (!$stock) {
                     $stock = BranchProductStock::create([
-                        'branch_id' => $data['branch_id'],
+                        'branch_id' => $branchId,
                         'product_id' => $item['product_id'],
                         'quantity' => 0,
+                        'reorder_level' => 0,
                     ]);
                 }
 
@@ -89,11 +110,12 @@ class PurchaseService
                 ]);
 
                 StockMovement::create([
-                    'branch_id' => $data['branch_id'],
+                    'branch_id' => $branchId,
                     'product_id' => $item['product_id'],
                     'type' => 'purchase',
                     'qty_in' => $quantity,
                     'qty_out' => 0,
+                    'quantity' => $quantity,
                     'balance_after' => $newBalance,
                     'reference_type' => 'purchase',
                     'reference_id' => $purchase->id,
@@ -106,16 +128,29 @@ class PurchaseService
                 Payment::create([
                     'reference_type' => 'purchase',
                     'reference_id' => $purchase->id,
-                    'branch_id' => $data['branch_id'],
+                    'branch_id' => $branchId,
                     'type' => 'out',
                     'amount' => $paidAmount,
                     'method' => $data['payment_method'] ?? 'cash',
-                    'note' => 'Purchase payment: ' . ($purchase->invoice_no ?? ('Purchase #' . $purchase->id)),
+                    'payment_date' => $purchase->purchase_date,
+                    'note' => 'Purchase payment: ' . ($purchase->invoice_no ?? $purchase->purchase_no),
                     'created_by' => Auth::id(),
                 ]);
             }
 
-            return $purchase->load(['branch', 'supplier', 'items.product']);
+            return $purchase->load(['branch', 'supplier', 'items.product', 'creator']);
         });
+    }
+
+    protected function generatePurchaseNo(): string
+    {
+        $setting = CompanySetting::first();
+
+        $prefix = $setting?->purchase_prefix ?: 'PUR';
+        $date = now()->format('Ymd');
+
+        $lastId = PurchaseHeader::max('id') ?? 0;
+
+        return $prefix . '-' . $date . '-' . str_pad($lastId + 1, 5, '0', STR_PAD_LEFT);
     }
 }

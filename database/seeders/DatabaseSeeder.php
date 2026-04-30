@@ -19,17 +19,9 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         $this->call([
+            BranchSeeder::class,
             RolesAndPermissionsSeeder::class,
+            UserSeeder::class,
         ]);
-        $user = User::updateOrCreate(
-            ['email' => 'admin@example.com'],
-            [
-                'name' => 'Admin User',
-                'email' => 'admin@example.com',
-                'password' => Hash::make('password123'),
-            ]
-        );
-
-        $user->assignRole('super-admin');
     }
 }

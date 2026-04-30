@@ -19,6 +19,8 @@ export default function Create({ sales, selectedSale, filters }) {
         return_date: new Date().toISOString().slice(0, 10),
         reason: '',
         items: [],
+        refund_amount: '',
+        refund_method: 'cash',
     });
 
     useEffect(() => {
@@ -102,7 +104,9 @@ export default function Create({ sales, selectedSale, filters }) {
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                             <div className="md:col-span-3">
-                                <label className="mb-1 block text-sm font-medium text-gray-700">Invoice</label>
+                                <label className="mb-1 block text-sm font-medium text-gray-700">
+                                    Invoice
+                                </label>
                                 <select
                                     value={selectedSaleId}
                                     onChange={(e) => {
@@ -114,7 +118,9 @@ export default function Create({ sales, selectedSale, filters }) {
                                     <option value="">Select Invoice</option>
                                     {sales.map((sale) => (
                                         <option key={sale.id} value={sale.id}>
-                                            {sale.invoice_no} | {sale.sale_date} | {sale.customer?.name ?? 'Walk-in'} | {formatCurrency(sale.grand_total)}
+                                            {sale.invoice_no} | {sale.sale_date} |{' '}
+                                            {sale.customer?.name ?? 'Walk-in'} |{' '}
+                                            {formatCurrency(sale.grand_total)}
                                         </option>
                                     ))}
                                 </select>
@@ -150,7 +156,9 @@ export default function Create({ sales, selectedSale, filters }) {
 
                                     <div>
                                         <div className="text-sm text-gray-500">Customer</div>
-                                        <div className="font-semibold">{selectedSale.customer ?? 'Walk-in'}</div>
+                                        <div className="font-semibold">
+                                            {selectedSale.customer ?? 'Walk-in'}
+                                        </div>
                                     </div>
 
                                     <div>
@@ -161,7 +169,9 @@ export default function Create({ sales, selectedSale, filters }) {
                             </div>
 
                             <div className="rounded-xl bg-white p-6 shadow">
-                                <h3 className="mb-4 text-lg font-semibold text-slate-900">Return Items</h3>
+                                <h3 className="mb-4 text-lg font-semibold text-slate-900">
+                                    Return Items
+                                </h3>
 
                                 {errors.items && (
                                     <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
@@ -173,13 +183,27 @@ export default function Create({ sales, selectedSale, filters }) {
                                     <table className="min-w-full divide-y divide-gray-200 border border-gray-200">
                                         <thead className="bg-gray-50">
                                             <tr>
-                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Product</th>
-                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">SKU</th>
-                                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Sold</th>
-                                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Already Returned</th>
-                                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Available</th>
-                                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Return Qty</th>
-                                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Amount</th>
+                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                                    Product
+                                                </th>
+                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                                    SKU
+                                                </th>
+                                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                                                    Sold
+                                                </th>
+                                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                                                    Already Returned
+                                                </th>
+                                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                                                    Available
+                                                </th>
+                                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                                                    Return Qty
+                                                </th>
+                                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                                                    Amount
+                                                </th>
                                             </tr>
                                         </thead>
 
@@ -188,9 +212,15 @@ export default function Create({ sales, selectedSale, filters }) {
                                                 <tr key={item.id}>
                                                     <td className="px-4 py-3">{item.product_name}</td>
                                                     <td className="px-4 py-3">{item.sku}</td>
-                                                    <td className="px-4 py-3 text-right">{item.sold_qty}</td>
-                                                    <td className="px-4 py-3 text-right">{item.returned_qty}</td>
-                                                    <td className="px-4 py-3 text-right">{item.available_qty}</td>
+                                                    <td className="px-4 py-3 text-right">
+                                                        {item.sold_qty}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right">
+                                                        {item.returned_qty}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right">
+                                                        {item.available_qty}
+                                                    </td>
                                                     <td className="px-4 py-3 text-right">
                                                         <input
                                                             type="number"
@@ -198,13 +228,18 @@ export default function Create({ sales, selectedSale, filters }) {
                                                             max={item.available_qty}
                                                             step="0.01"
                                                             value={data.items[index]?.quantity ?? ''}
-                                                            onChange={(e) => updateQuantity(index, e.target.value)}
+                                                            onChange={(e) =>
+                                                                updateQuantity(index, e.target.value)
+                                                            }
                                                             className="w-28 rounded-lg border border-gray-300 px-3 py-2 text-right"
                                                             disabled={item.available_qty <= 0}
                                                         />
                                                     </td>
                                                     <td className="px-4 py-3 text-right">
-                                                        {formatCurrency(Number(data.items[index]?.quantity || 0) * Number(item.unit_price))}
+                                                        {formatCurrency(
+                                                            Number(data.items[index]?.quantity || 0) *
+                                                                Number(item.unit_price)
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -216,7 +251,9 @@ export default function Create({ sales, selectedSale, filters }) {
                             <div className="rounded-xl bg-white p-6 shadow">
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                                     <div className="md:col-span-2">
-                                        <label className="mb-1 block text-sm font-medium text-gray-700">Reason</label>
+                                        <label className="mb-1 block text-sm font-medium text-gray-700">
+                                            Reason
+                                        </label>
                                         <textarea
                                             value={data.reason}
                                             onChange={(e) => setData('reason', e.target.value)}
@@ -227,7 +264,9 @@ export default function Create({ sales, selectedSale, filters }) {
                                     </div>
 
                                     <div>
-                                        <label className="mb-1 block text-sm font-medium text-gray-700">Return Date</label>
+                                        <label className="mb-1 block text-sm font-medium text-gray-700">
+                                            Return Date
+                                        </label>
                                         <input
                                             type="date"
                                             value={data.return_date}
@@ -236,9 +275,57 @@ export default function Create({ sales, selectedSale, filters }) {
                                         />
 
                                         <div className="mt-6 rounded-lg bg-gray-50 p-4">
-                                            <div className="text-sm text-gray-500">Total Return Amount</div>
-                                            <div className="text-2xl font-bold text-slate-900">{formatCurrency(total)}</div>
+                                            <div className="text-sm text-gray-500">
+                                                Total Return Amount
+                                            </div>
+                                            <div className="text-2xl font-bold text-slate-900">
+                                                {formatCurrency(total)}
+                                            </div>
                                         </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div>
+                                        <label className="mb-1 block text-sm font-medium text-gray-700">
+                                            Refund Amount
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max={total}
+                                            value={data.refund_amount}
+                                            onChange={(e) => setData('refund_amount', e.target.value)}
+                                            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                                            placeholder="0.00"
+                                        />
+                                        {errors.refund_amount && (
+                                            <div className="mt-1 text-sm text-red-600">
+                                                {errors.refund_amount}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1 block text-sm font-medium text-gray-700">
+                                            Refund Method
+                                        </label>
+                                        <select
+                                            value={data.refund_method}
+                                            onChange={(e) => setData('refund_method', e.target.value)}
+                                            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                                        >
+                                            <option value="cash">Cash</option>
+                                            <option value="card">Card</option>
+                                            <option value="bank">Bank</option>
+                                            <option value="credit">Credit</option>
+                                        </select>
+                                        {errors.refund_method && (
+                                            <div className="mt-1 text-sm text-red-600">
+                                                {errors.refund_method}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 

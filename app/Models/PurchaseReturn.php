@@ -13,6 +13,9 @@ class PurchaseReturn extends Model
         'return_date',
         'total_amount',
         'reason',
+        'refund_amount',
+        'refund_method',
+        'refund_status',
         'created_by',
     ];
 

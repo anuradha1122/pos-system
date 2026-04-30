@@ -4,12 +4,14 @@ import { Head, Link, usePage } from '@inertiajs/react';
 export default function Show({ purchase }) {
     const { auth } = usePage().props;
 
+    const money = (value) => Number(value || 0).toFixed(2);
+
     return (
         <AuthenticatedLayout
             user={auth.user}
             header={<h2 className="text-xl font-semibold text-gray-800">Purchase Details</h2>}
         >
-            <Head title={purchase.purchase_no} />
+            <Head title={purchase.purchase_no ?? `Purchase #${purchase.id}`} />
 
             <div className="py-6 print:py-0">
                 <div className="mx-auto max-w-5xl space-y-6 sm:px-6 lg:px-8 print:max-w-full print:px-0">
@@ -34,9 +36,11 @@ export default function Show({ purchase }) {
                         <div className="mb-8 flex items-start justify-between border-b pb-6">
                             <div>
                                 <h1 className="text-2xl font-bold text-slate-900">Purchase Receipt</h1>
+
                                 <p className="mt-1 text-sm text-gray-500">
-                                    Purchase No: {purchase.purchase_no}
+                                    Purchase No: {purchase.purchase_no ?? `PUR-${purchase.id}`}
                                 </p>
+
                                 <p className="mt-1 text-sm text-gray-500">
                                     Supplier Invoice: {purchase.invoice_no ?? '-'}
                                 </p>
@@ -76,16 +80,19 @@ export default function Show({ purchase }) {
                                 <div className="font-medium text-slate-900">
                                     {purchase.supplier?.name ?? '-'}
                                 </div>
+
                                 {purchase.supplier?.phone && (
                                     <div className="text-sm text-gray-600">
                                         {purchase.supplier.phone}
                                     </div>
                                 )}
+
                                 {purchase.supplier?.email && (
                                     <div className="text-sm text-gray-600">
                                         {purchase.supplier.email}
                                     </div>
                                 )}
+
                                 {purchase.supplier?.address && (
                                     <div className="mt-1 text-sm text-gray-600">
                                         {purchase.supplier.address}
@@ -128,16 +135,20 @@ export default function Show({ purchase }) {
                                 <tbody className="divide-y divide-gray-200 bg-white">
                                     {purchase.items.map((item) => (
                                         <tr key={item.id}>
-                                            <td className="px-4 py-3">{item.product_name}</td>
-                                            <td className="px-4 py-3">{item.sku ?? '-'}</td>
-                                            <td className="px-4 py-3 text-right">
-                                                {Number(item.quantity).toFixed(2)}
+                                            <td className="px-4 py-3">
+                                                {item.product_name ?? item.product?.name ?? '-'}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {item.sku ?? item.product?.sku ?? '-'}
                                             </td>
                                             <td className="px-4 py-3 text-right">
-                                                {Number(item.unit_cost).toFixed(2)}
+                                                {money(item.quantity)}
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                {money(item.cost_price ?? item.unit_cost ?? item.unit_price ?? 0)}
                                             </td>
                                             <td className="px-4 py-3 text-right font-medium">
-                                                {Number(item.line_total).toFixed(2)}
+                                                {money(item.line_total ?? Number(item.quantity || 0) * Number(item.cost_price ?? item.unit_cost ?? item.unit_price ?? 0))}
                                             </td>
                                         </tr>
                                     ))}
@@ -149,30 +160,41 @@ export default function Show({ purchase }) {
                             <div className="w-full max-w-sm space-y-3 rounded-lg border border-gray-200 p-4">
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-gray-600">Subtotal</span>
-                                    <span className="font-medium">
-                                        {Number(purchase.subtotal).toFixed(2)}
-                                    </span>
+                                    <span className="font-medium">{money(purchase.subtotal)}</span>
                                 </div>
 
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-gray-600">Discount</span>
-                                    <span className="font-medium">
-                                        {Number(purchase.discount).toFixed(2)}
-                                    </span>
+                                    <span className="font-medium">{money(purchase.discount)}</span>
                                 </div>
 
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-gray-600">Tax</span>
-                                    <span className="font-medium">
-                                        {Number(purchase.tax).toFixed(2)}
-                                    </span>
+                                    <span className="font-medium">{money(purchase.tax)}</span>
                                 </div>
 
                                 <div className="border-t pt-3">
                                     <div className="flex items-center justify-between text-lg font-bold text-slate-900">
                                         <span>Grand Total</span>
-                                        <span>{Number(purchase.grand_total).toFixed(2)}</span>
+                                        <span>{money(purchase.grand_total)}</span>
                                     </div>
+                                </div>
+
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-600">Paid</span>
+                                    <span className="font-medium">{money(purchase.paid_amount)}</span>
+                                </div>
+
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-600">Balance</span>
+                                    <span className="font-medium">{money(purchase.balance_amount)}</span>
+                                </div>
+
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-600">Status</span>
+                                    <span className="font-medium capitalize">
+                                        {purchase.payment_status ? purchase.payment_status : 'credit'}
+                                    </span>
                                 </div>
                             </div>
                         </div>

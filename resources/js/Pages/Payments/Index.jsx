@@ -29,6 +29,7 @@ export default function Index({ auth, payments }) {
                                 <th className="p-3">Method</th>
                                 <th className="p-3 text-right">Amount</th>
                                 <th className="p-3">Created By</th>
+                                <th className="p-3 text-right">Actions</th>
                             </tr>
                         </thead>
 
@@ -38,10 +39,17 @@ export default function Index({ auth, payments }) {
                                     <td className="p-3">
                                         {new Date(payment.created_at).toLocaleDateString()}
                                     </td>
+
                                     <td className="p-3">
-                                        {payment.reference_type} #{payment.reference_id}
+                                        {payment.reference_type
+                                            ? `${payment.reference_type} #${payment.reference_id}`
+                                            : '-'}
                                     </td>
-                                    <td className="p-3">{payment.branch?.name}</td>
+
+                                    <td className="p-3">
+                                        {payment.branch?.name || '-'}
+                                    </td>
+
                                     <td className="p-3">
                                         <span
                                             className={`rounded px-2 py-1 text-xs ${
@@ -50,20 +58,50 @@ export default function Index({ auth, payments }) {
                                                     : 'bg-red-100 text-red-700'
                                             }`}
                                         >
-                                            {payment.type.toUpperCase()}
+                                            {payment.type?.toUpperCase()}
                                         </span>
                                     </td>
-                                    <td className="p-3 capitalize">{payment.method}</td>
+
+                                    <td className="p-3 capitalize">
+                                        {payment.method || '-'}
+                                    </td>
+
                                     <td className="p-3 text-right">
                                         Rs. {Number(payment.amount).toFixed(2)}
                                     </td>
-                                    <td className="p-3">{payment.creator?.name}</td>
+
+                                    <td className="p-3">
+                                        {payment.creator?.name || '-'}
+                                    </td>
+
+                                    <td className="p-3">
+                                        <div className="flex justify-end gap-2">
+                                            <Link
+                                                href={route('payments.receipt', payment.id)}
+                                                className="rounded bg-slate-700 px-3 py-1 text-xs text-white"
+                                            >
+                                                Receipt
+                                            </Link>
+
+                                            <a
+                                                href={route('payments.receipt.pdf', payment.id)}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="rounded bg-red-600 px-3 py-1 text-xs text-white"
+                                            >
+                                                PDF
+                                            </a>
+                                        </div>
+                                    </td>
                                 </tr>
                             ))}
 
                             {payments.data.length === 0 && (
                                 <tr>
-                                    <td colSpan="7" className="p-6 text-center text-gray-500">
+                                    <td
+                                        colSpan="8"
+                                        className="p-6 text-center text-gray-500"
+                                    >
                                         No payments found.
                                     </td>
                                 </tr>

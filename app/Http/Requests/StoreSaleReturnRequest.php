@@ -20,6 +20,8 @@ class StoreSaleReturnRequest extends FormRequest
             'items' => ['required', 'array', 'min:1'],
             'items.*.sale_item_id' => ['required', 'exists:sale_items,id'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
+            'refund_amount' => ['nullable', 'numeric', 'min:0'],
+            'refund_method' => ['nullable', 'in:cash,card,bank,credit'],
         ];
     }
 }

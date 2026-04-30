@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Models\CompanySetting;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -22,6 +23,9 @@ class LowStockReportExport implements FromCollection, WithHeadings
         $branchId = $this->filters['branch_id'] ?? null;
         $onlyLow = ($this->filters['only_low'] ?? 0) == 1;
 
+        $setting = CompanySetting::first();
+        $defaultThreshold = (float) ($setting?->low_stock_threshold ?? 5);
+
         $query = DB::table('branch_product_stocks')
             ->join('branches', 'branch_product_stocks.branch_id', '=', 'branches.id')
             ->join('products', 'branch_product_stocks.product_id', '=', 'products.id')
@@ -39,27 +43,45 @@ class LowStockReportExport implements FromCollection, WithHeadings
                 'branches.name as branch',
                 'branch_product_stocks.quantity',
                 'branch_product_stocks.reorder_level',
-                DB::raw('CASE WHEN branch_product_stocks.quantity <= branch_product_stocks.reorder_level AND branch_product_stocks.reorder_level > 0 THEN 1 ELSE 0 END as is_low'),
-                DB::raw('CASE WHEN branch_product_stocks.quantity <= branch_product_stocks.reorder_level THEN (branch_product_stocks.reorder_level - branch_product_stocks.quantity) ELSE 0 END as shortage'),
+
+                DB::raw("
+                    CASE
+                        WHEN branch_product_stocks.reorder_level > 0
+                        THEN branch_product_stocks.reorder_level
+                        ELSE {$defaultThreshold}
+                    END as effective_reorder_level
+                "),
             ]);
 
         if ($onlyLow) {
-            $query->whereColumn('branch_product_stocks.quantity', '<=', 'branch_product_stocks.reorder_level')
-                  ->where('branch_product_stocks.reorder_level', '>', 0);
+            $query->whereRaw("
+                branch_product_stocks.quantity <=
+                CASE
+                    WHEN branch_product_stocks.reorder_level > 0
+                    THEN branch_product_stocks.reorder_level
+                    ELSE ?
+                END
+            ", [$defaultThreshold]);
         }
 
         return $query
             ->orderBy('products.name')
             ->get()
             ->map(function ($row) {
+                $quantity = (float) $row->quantity;
+                $threshold = (float) $row->effective_reorder_level;
+
+                $isLow = $quantity <= $threshold;
+                $shortage = $isLow ? max($threshold - $quantity, 0) : 0;
+
                 return [
                     $row->product,
                     $row->sku,
                     $row->branch,
-                    (float) $row->quantity,
-                    (float) $row->reorder_level,
-                    (int) $row->is_low === 1 ? 'Low' : 'OK',
-                    (float) $row->shortage > 0 ? (float) $row->shortage : '-',
+                    $quantity,
+                    $threshold,
+                    $isLow ? 'Low' : 'OK',
+                    $shortage > 0 ? $shortage : '-',
                 ];
             });
     }
@@ -71,7 +93,7 @@ class LowStockReportExport implements FromCollection, WithHeadings
             'SKU',
             'Branch',
             'Quantity',
-            'Reorder Level',
+            'Threshold',
             'Status',
             'Shortage',
         ];

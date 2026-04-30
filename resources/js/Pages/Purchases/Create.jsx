@@ -8,6 +8,8 @@ export default function Create({ auth, branches, suppliers, products }) {
         purchase_date: new Date().toISOString().slice(0, 10),
         invoice_no: '',
         note: '',
+        paid_amount: '',
+        payment_method: 'cash',
         items: [
             {
                 product_id: '',
@@ -29,6 +31,8 @@ export default function Create({ auth, branches, suppliers, products }) {
     };
 
     const removeItemRow = (index) => {
+        if (data.items.length === 1) return;
+
         const updatedItems = [...data.items];
         updatedItems.splice(index, 1);
         setData('items', updatedItems);
@@ -37,6 +41,17 @@ export default function Create({ auth, branches, suppliers, products }) {
     const updateItem = (index, field, value) => {
         const updatedItems = [...data.items];
         updatedItems[index][field] = value;
+
+        if (field === 'product_id') {
+            const selectedProduct = products.find(
+                (product) => String(product.id) === String(value)
+            );
+
+            if (selectedProduct) {
+                updatedItems[index].cost_price = selectedProduct.cost_price ?? '';
+            }
+        }
+
         setData('items', updatedItems);
     };
 
@@ -45,6 +60,8 @@ export default function Create({ auth, branches, suppliers, products }) {
         const costPrice = parseFloat(item.cost_price || 0);
         return sum + quantity * costPrice;
     }, 0);
+
+    const balanceAmount = totalAmount - Number(data.paid_amount || 0);
 
     const submit = (e) => {
         e.preventDefault();
@@ -76,7 +93,9 @@ export default function Create({ auth, branches, suppliers, products }) {
                                         </option>
                                     ))}
                                 </select>
-                                {errors.branch_id && <div className="mt-1 text-sm text-red-600">{errors.branch_id}</div>}
+                                {errors.branch_id && (
+                                    <div className="mt-1 text-sm text-red-600">{errors.branch_id}</div>
+                                )}
                             </div>
 
                             <div>
@@ -89,11 +108,14 @@ export default function Create({ auth, branches, suppliers, products }) {
                                     <option value="">Select supplier</option>
                                     {suppliers.map((supplier) => (
                                         <option key={supplier.id} value={supplier.id}>
-                                            {supplier.name}{supplier.company_name ? ` - ${supplier.company_name}` : ''}
+                                            {supplier.name}
+                                            {supplier.company_name ? ` - ${supplier.company_name}` : ''}
                                         </option>
                                     ))}
                                 </select>
-                                {errors.supplier_id && <div className="mt-1 text-sm text-red-600">{errors.supplier_id}</div>}
+                                {errors.supplier_id && (
+                                    <div className="mt-1 text-sm text-red-600">{errors.supplier_id}</div>
+                                )}
                             </div>
 
                             <div>
@@ -104,7 +126,9 @@ export default function Create({ auth, branches, suppliers, products }) {
                                     onChange={(e) => setData('purchase_date', e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 px-3 py-2"
                                 />
-                                {errors.purchase_date && <div className="mt-1 text-sm text-red-600">{errors.purchase_date}</div>}
+                                {errors.purchase_date && (
+                                    <div className="mt-1 text-sm text-red-600">{errors.purchase_date}</div>
+                                )}
                             </div>
 
                             <div>
@@ -115,7 +139,9 @@ export default function Create({ auth, branches, suppliers, products }) {
                                     onChange={(e) => setData('invoice_no', e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 px-3 py-2"
                                 />
-                                {errors.invoice_no && <div className="mt-1 text-sm text-red-600">{errors.invoice_no}</div>}
+                                {errors.invoice_no && (
+                                    <div className="mt-1 text-sm text-red-600">{errors.invoice_no}</div>
+                                )}
                             </div>
                         </div>
 
@@ -127,7 +153,9 @@ export default function Create({ auth, branches, suppliers, products }) {
                                 onChange={(e) => setData('note', e.target.value)}
                                 className="w-full rounded-lg border border-gray-300 px-3 py-2"
                             />
-                            {errors.note && <div className="mt-1 text-sm text-red-600">{errors.note}</div>}
+                            {errors.note && (
+                                <div className="mt-1 text-sm text-red-600">{errors.note}</div>
+                            )}
                         </div>
 
                         <div className="rounded-lg border border-gray-200">
@@ -137,9 +165,14 @@ export default function Create({ auth, branches, suppliers, products }) {
 
                             <div className="space-y-4 p-4">
                                 {data.items.map((item, index) => (
-                                    <div key={index} className="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 p-4 md:grid-cols-4">
+                                    <div
+                                        key={index}
+                                        className="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 p-4 md:grid-cols-4"
+                                    >
                                         <div>
-                                            <label className="mb-1 block text-sm font-medium text-gray-700">Product</label>
+                                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                                Product
+                                            </label>
                                             <select
                                                 value={item.product_id}
                                                 onChange={(e) => updateItem(index, 'product_id', e.target.value)}
@@ -153,12 +186,16 @@ export default function Create({ auth, branches, suppliers, products }) {
                                                 ))}
                                             </select>
                                             {errors[`items.${index}.product_id`] && (
-                                                <div className="mt-1 text-sm text-red-600">{errors[`items.${index}.product_id`]}</div>
+                                                <div className="mt-1 text-sm text-red-600">
+                                                    {errors[`items.${index}.product_id`]}
+                                                </div>
                                             )}
                                         </div>
 
                                         <div>
-                                            <label className="mb-1 block text-sm font-medium text-gray-700">Quantity</label>
+                                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                                Quantity
+                                            </label>
                                             <input
                                                 type="number"
                                                 step="0.01"
@@ -168,12 +205,16 @@ export default function Create({ auth, branches, suppliers, products }) {
                                                 className="w-full rounded-lg border border-gray-300 px-3 py-2"
                                             />
                                             {errors[`items.${index}.quantity`] && (
-                                                <div className="mt-1 text-sm text-red-600">{errors[`items.${index}.quantity`]}</div>
+                                                <div className="mt-1 text-sm text-red-600">
+                                                    {errors[`items.${index}.quantity`]}
+                                                </div>
                                             )}
                                         </div>
 
                                         <div>
-                                            <label className="mb-1 block text-sm font-medium text-gray-700">Cost Price</label>
+                                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                                Cost Price
+                                            </label>
                                             <input
                                                 type="number"
                                                 step="0.01"
@@ -183,7 +224,9 @@ export default function Create({ auth, branches, suppliers, products }) {
                                                 className="w-full rounded-lg border border-gray-300 px-3 py-2"
                                             />
                                             {errors[`items.${index}.cost_price`] && (
-                                                <div className="mt-1 text-sm text-red-600">{errors[`items.${index}.cost_price`]}</div>
+                                                <div className="mt-1 text-sm text-red-600">
+                                                    {errors[`items.${index}.cost_price`]}
+                                                </div>
                                             )}
                                         </div>
 
@@ -210,8 +253,27 @@ export default function Create({ auth, branches, suppliers, products }) {
                             </div>
                         </div>
 
-                        <div className="text-right text-lg font-semibold text-slate-900">
-                            Total: {totalAmount.toFixed(2)}
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            <div className="rounded-lg border border-gray-200 p-4">
+                                <div className="text-sm text-gray-500">Total</div>
+                                <div className="text-xl font-bold text-slate-900">
+                                    {totalAmount.toFixed(2)}
+                                </div>
+                            </div>
+
+                            <div className="rounded-lg border border-gray-200 p-4">
+                                <div className="text-sm text-gray-500">Paid</div>
+                                <div className="text-xl font-bold text-slate-900">
+                                    {Number(data.paid_amount || 0).toFixed(2)}
+                                </div>
+                            </div>
+
+                            <div className="rounded-lg border border-gray-200 p-4">
+                                <div className="text-sm text-gray-500">Balance</div>
+                                <div className="text-xl font-bold text-slate-900">
+                                    {balanceAmount.toFixed(2)}
+                                </div>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -220,9 +282,10 @@ export default function Create({ auth, branches, suppliers, products }) {
                                 <input
                                     type="number"
                                     step="0.01"
+                                    min="0"
                                     value={data.paid_amount}
                                     onChange={(e) => setData('paid_amount', e.target.value)}
-                                    className="w-full rounded border-gray-300"
+                                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
                                     placeholder="0.00"
                                 />
                                 {errors.paid_amount && (
@@ -235,7 +298,7 @@ export default function Create({ auth, branches, suppliers, products }) {
                                 <select
                                     value={data.payment_method}
                                     onChange={(e) => setData('payment_method', e.target.value)}
-                                    className="w-full rounded border-gray-300"
+                                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
                                 >
                                     <option value="cash">Cash</option>
                                     <option value="card">Card</option>
@@ -251,7 +314,7 @@ export default function Create({ auth, branches, suppliers, products }) {
                                 disabled={processing}
                                 className="rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800 disabled:opacity-50"
                             >
-                                Save Purchase
+                                {processing ? 'Saving...' : 'Save Purchase'}
                             </button>
 
                             <Link

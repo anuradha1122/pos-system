@@ -23,6 +23,9 @@ class StorePurchaseReturnRequest extends FormRequest
             'items.*.product_id' => ['required', 'exists:products,id'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
             'items.*.cost_price' => ['required', 'numeric', 'min:0'],
+
+            'refund_amount' => ['nullable', 'numeric', 'min:0'],
+            'refund_method' => ['nullable', 'in:cash,card,bank,credit'],
         ];
     }
 }

@@ -1,187 +1,322 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\BranchController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\BrandController;
-use App\Http\Controllers\UnitController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\SupplierController;
-use App\Http\Controllers\StockAdjustmentController;
-use App\Http\Controllers\StockBalanceController;
-use App\Http\Controllers\PurchaseController;
-use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\SaleController;
+
+/*
+|--------------------------------------------------------------------------
+| Controllers
+|--------------------------------------------------------------------------
+*/
+
+use App\Http\Controllers\{
+    DashboardController,
+    BranchController,
+    RoleController,
+    UserController,
+    CategoryController,
+    BrandController,
+    UnitController,
+    ProductController,
+    SupplierController,
+    CustomerController,
+    StockAdjustmentController,
+    StockBalanceController,
+    PurchaseController,
+    PurchaseReturnController,
+    SaleController,
+    SaleReturnController,
+    PaymentController,
+    CustomerCreditController,
+    SupplierCreditController,
+    ExpenseController,
+    DailyClosingController,
+    AuditLogController,
+    CompanySettingController,
+    CustomerStatementController,
+    SupplierStatementController
+};
+
 use App\Http\Controllers\ReportController;
-use App\Http\Controllers\SaleReturnController;
-use App\Http\Controllers\PurchaseReturnController;
-use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\CustomerCreditController;
-use App\Http\Controllers\SupplierCreditController;
+use App\Http\Controllers\CashFlowReportController;
+use App\Http\Controllers\InventoryValuationReportController;
+use App\Http\Controllers\ProfitByProductReportController;
+use App\Http\Controllers\Report\ExpenseReportController;
+
+use App\Http\Controllers\SaleDocumentController;
+use App\Http\Controllers\PaymentReceiptController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
-// Route::get('/', function () {
-//     return redirect()->route('dashboard');
-// });
+/*
+|--------------------------------------------------------------------------
+| Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware(['auth'])->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard
+    |--------------------------------------------------------------------------
+    */
     Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->middleware('can:dashboard.view')
+        ->middleware('permission:dashboard.view')
         ->name('dashboard');
 
-    Route::get('/branches', [BranchController::class, 'index'])
-        ->middleware('can:branch.view')
-        ->name('branches.index');
+    /*
+    |--------------------------------------------------------------------------
+    | User Management
+    |--------------------------------------------------------------------------
+    */
+    Route::resource('branches', BranchController::class)
+        ->middleware('permission:branch.view');
 
-    Route::get('/branches/create', [BranchController::class, 'create'])
-        ->middleware('can:branch.create')
-        ->name('branches.create');
+    Route::resource('roles', RoleController::class)
+        ->middleware('permission:role.view');
 
-    Route::post('/branches', [BranchController::class, 'store'])
-        ->middleware('can:branch.create')
-        ->name('branches.store');
+    Route::resource('users', UserController::class)
+        ->middleware('permission:user.view');
 
-    Route::get('/branches/{branch}/edit', [BranchController::class, 'edit'])
-        ->middleware('can:branch.update')
-        ->name('branches.edit');
+    /*
+    |--------------------------------------------------------------------------
+    | Master Data
+    |--------------------------------------------------------------------------
+    */
+    Route::resource('categories', CategoryController::class)
+        ->middleware('permission:category.view');
 
-    Route::put('/branches/{branch}', [BranchController::class, 'update'])
-        ->middleware('can:branch.update')
-        ->name('branches.update');
+    Route::resource('brands', BrandController::class)
+        ->middleware('permission:brand.view');
 
-    Route::get('/users', [UserController::class, 'index'])
-        ->name('users.index')
-        ->middleware('can:user.view');
+    Route::resource('units', UnitController::class)
+        ->middleware('permission:unit.view');
 
-    Route::get('/users/create', [UserController::class, 'create'])
-        ->name('users.create')
-        ->middleware('can:user.create');
+    Route::resource('products', ProductController::class)
+        ->middleware('permission:product.view');
 
-    Route::post('/users', [UserController::class, 'store'])
-        ->name('users.store')
-        ->middleware('can:user.create');
+    Route::patch('/products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])
+        ->middleware('permission:product.update')
+        ->name('products.toggle-status');
 
-    Route::get('/users/{user}/edit', [UserController::class, 'edit'])
-        ->name('users.edit')
-        ->middleware('can:user.edit');
+    /*
+    |--------------------------------------------------------------------------
+    | Customers & Suppliers
+    |--------------------------------------------------------------------------
+    */
+    Route::resource('customers', CustomerController::class)
+        ->middleware('permission:customer.view');
 
-    Route::put('/users/{user}', [UserController::class, 'update'])
-        ->name('users.update')
-        ->middleware('can:user.edit');
+    Route::resource('suppliers', SupplierController::class)
+        ->middleware('permission:supplier.view');
 
-    Route::get('/roles', [RoleController::class, 'index'])
-        ->name('roles.index')
-        ->middleware('can:role.view');
+    Route::patch('/suppliers/{supplier}/toggle-status', [SupplierController::class, 'toggleStatus'])
+        ->middleware('permission:supplier.update')
+        ->name('suppliers.toggle-status');
 
-    Route::get('/roles/create', [RoleController::class, 'create'])
-        ->name('roles.create')
-        ->middleware('can:role.create');
+    /*
+    |--------------------------------------------------------------------------
+    | Inventory
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/stock-balances', [StockBalanceController::class, 'index'])
+        ->middleware('permission:stock-balance.view')
+        ->name('stock-balances.index');
 
-    Route::post('/roles', [RoleController::class, 'store'])
-        ->name('roles.store')
-        ->middleware('can:role.create');
+    Route::resource('stock-adjustments', StockAdjustmentController::class)
+        ->middleware('permission:stock-adjustment.view');
 
-    Route::get('/roles/{role}/edit', [RoleController::class, 'edit'])
-        ->name('roles.edit')
-        ->middleware('can:role.edit');
-
-    Route::put('/roles/{role}', [RoleController::class, 'update'])
-        ->name('roles.update')
-        ->middleware('can:role.edit');
-
-
-    Route::resource('categories', CategoryController::class)->except(['show', 'destroy']);
-    Route::resource('brands', BrandController::class)->except(['show', 'destroy']);
-    Route::resource('units', UnitController::class)->except(['show', 'destroy']);
-
-
-    Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-    Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
-    Route::post('/products', [ProductController::class, 'store'])->name('products.store');
-    Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
-    Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
-
-
-
-    // optional deactivate action
-    Route::patch('/products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
-
-
-    Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
-    Route::get('/suppliers/create', [SupplierController::class, 'create'])->name('suppliers.create');
-    Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
-    Route::get('/suppliers/{supplier}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
-    Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
-    Route::patch('/suppliers/{supplier}/toggle-status', [SupplierController::class, 'toggleStatus'])->name('suppliers.toggle-status');
-
-
-    Route::get('/stock-adjustments', [StockAdjustmentController::class, 'index'])->name('stock-adjustments.index');
-    Route::get('/stock-adjustments/create', [StockAdjustmentController::class, 'create'])->name('stock-adjustments.create');
-    Route::post('/stock-adjustments', [StockAdjustmentController::class, 'store'])->name('stock-adjustments.store');
-
-    Route::get('/stock-balances', [StockBalanceController::class, 'index'])->name('stock-balances.index');
-
-    Route::get('/reports/stock-movements', [ReportController::class, 'stockMovements'])
-    ->name('reports.stock-movements');
-
-    Route::get('/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
-    Route::get('/purchases/create', [PurchaseController::class, 'create'])->name('purchases.create');
-    Route::post('/purchases', [PurchaseController::class, 'store'])->name('purchases.store');
-    Route::get('/purchases/{purchase}', [PurchaseController::class, 'show'])->name('purchases.show');
-
-    Route::resource('customers', CustomerController::class)->except(['show', 'destroy']);
-
-
-    Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
-    Route::get('/sales/create', [SaleController::class, 'create'])->name('sales.create');
-    Route::post('/sales', [SaleController::class, 'store'])->name('sales.store');
-    Route::get('/sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
-    Route::get('/reports/sales', [ReportController::class, 'sales'])->name('reports.sales');
-    Route::get('/reports/low-stock', [ReportController::class, 'lowStock'])
-    ->name('reports.low-stock');
-    Route::get('/reports/profit', [ReportController::class, 'profit'])
-    ->name('reports.profit');
-
-    Route::get('/reports/profit/export', [ReportController::class, 'profitExport'])
-    ->name('reports.profit.export');
-    Route::get('/reports/sales/export', [ReportController::class, 'salesExport'])
-    ->name('reports.sales.export');
-    Route::get('/reports/stock-movements/export', [ReportController::class, 'stockMovementsExport'])
-    ->name('reports.stock-movements.export');
-    Route::get('/reports/low-stock/export', [ReportController::class, 'lowStockExport'])
-    ->name('reports.low-stock.export');
-    Route::resource('sale-returns', SaleReturnController::class)
-    ->only(['index', 'create', 'store', 'show']);
+    /*
+    |--------------------------------------------------------------------------
+    | Purchases
+    |--------------------------------------------------------------------------
+    */
+    Route::resource('purchases', PurchaseController::class)
+        ->middleware('permission:purchase.view');
 
     Route::resource('purchase-returns', PurchaseReturnController::class)
-        ->only(['index', 'create', 'store', 'show']);
+        ->middleware('permission:purchase-return.view');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Sales
+    |--------------------------------------------------------------------------
+    */
+    Route::resource('sales', SaleController::class)
+        ->middleware('permission:sale.view');
+
+    Route::resource('sale-returns', SaleReturnController::class)
+        ->middleware('permission:sale-return.view');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sale Documents
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/sales/{sale}/thermal-receipt', [SaleDocumentController::class, 'thermal'])
+        ->middleware('permission:sale.view')
+        ->name('sales.thermal-receipt');
+
+    Route::get('/sales/{sale}/invoice-pdf', [SaleDocumentController::class, 'invoicePdf'])
+        ->middleware('permission:sale.view')
+        ->name('sales.invoice-pdf');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Payments
+    |--------------------------------------------------------------------------
+    */
     Route::resource('payments', PaymentController::class)
-        ->only(['index', 'create', 'store']);
+        ->middleware('permission:payment.view');
 
+    Route::get('/payments/{payment}/receipt', [PaymentReceiptController::class, 'show'])
+        ->name('payments.receipt');
+
+    Route::get('/payments/{payment}/receipt-pdf', [PaymentReceiptController::class, 'pdf'])
+        ->name('payments.receipt.pdf');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Credits
+    |--------------------------------------------------------------------------
+    */
     Route::get('/customer-credits', [CustomerCreditController::class, 'index'])
+        ->middleware('permission:customer-credit.view')
         ->name('customer-credits.index');
 
     Route::get('/customer-credits/{customer}', [CustomerCreditController::class, 'show'])
+        ->middleware('permission:customer-credit.view')
         ->name('customer-credits.show');
 
     Route::post('/customer-credits/receive-payment', [CustomerCreditController::class, 'receivePayment'])
+        ->middleware('permission:payment.create')
         ->name('customer-credits.receive-payment');
 
+
     Route::get('/supplier-credits', [SupplierCreditController::class, 'index'])
+        ->middleware('permission:supplier-credit.view')
         ->name('supplier-credits.index');
 
     Route::get('/supplier-credits/{supplier}', [SupplierCreditController::class, 'show'])
+        ->middleware('permission:supplier-credit.view')
         ->name('supplier-credits.show');
 
     Route::post('/supplier-credits/make-payment', [SupplierCreditController::class, 'makePayment'])
+        ->middleware('permission:payment.create')
         ->name('supplier-credits.make-payment');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Expenses
+    |--------------------------------------------------------------------------
+    */
+    Route::resource('expenses', ExpenseController::class)
+        ->middleware('permission:expense.view');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Daily Closing
+    |--------------------------------------------------------------------------
+    */
+    Route::resource('daily-closings', DailyClosingController::class)
+        ->middleware('permission:daily-closing.view');
+
+    Route::post('/daily-closings/{dailyClosing}/finalize', [DailyClosingController::class, 'finalize'])
+        ->middleware('permission:daily-closing.finalize')
+        ->name('daily-closings.finalize');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reports
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('reports')->name('reports.')->group(function () {
+
+        Route::get('/sales', [ReportController::class, 'sales'])->name('sales');
+        Route::get('/sales/export', [ReportController::class, 'salesExport'])->name('sales.export');
+
+        Route::get('/profit', [ReportController::class, 'profit'])->name('profit');
+        Route::get('/profit/export', [ReportController::class, 'profitExport'])->name('profit.export');
+
+        Route::get('/low-stock', [ReportController::class, 'lowStock'])->name('low-stock');
+        Route::get('/low-stock/export', [ReportController::class, 'lowStockExport'])->name('low-stock.export');
+
+        Route::get('/stock-movements', [ReportController::class, 'stockMovements'])->name('stock-movements');
+        Route::get('/stock-movements/export', [ReportController::class, 'stockMovementsExport'])->name('stock-movements.export');
+
+        Route::get('/cash-flow', [CashFlowReportController::class, 'index'])->name('cash-flow.index');
+        Route::get('/cash-flow/export', [CashFlowReportController::class, 'export'])->name('cash-flow.export');
+
+        Route::get('/inventory-valuation', [InventoryValuationReportController::class, 'index'])->name('inventory-valuation.index');
+        Route::get('/inventory-valuation/export', [InventoryValuationReportController::class, 'export'])->name('inventory-valuation.export');
+
+        Route::get('/profit-by-product', [ProfitByProductReportController::class, 'index'])->name('profit-by-product.index');
+        Route::get('/profit-by-product/export', [ProfitByProductReportController::class, 'export'])->name('profit-by-product.export');
+
+        Route::get('/expenses', [ExpenseReportController::class, 'index'])->name('expenses');
+        Route::get('/expenses/export', [ExpenseReportController::class, 'export'])->name('expenses.export');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Statements
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/customer-statements', [CustomerStatementController::class, 'index'])
+        ->middleware('permission:statement.customer.view')
+        ->name('customer-statements.index');
+
+    Route::get('/customer-statements/{customer}', [CustomerStatementController::class, 'show'])
+        ->middleware('permission:statement.customer.view')
+        ->name('customer-statements.show');
+
+    Route::get('/customer-statements/{customer}/pdf', [CustomerStatementController::class, 'pdf'])
+        ->middleware('permission:statement.customer.pdf')
+        ->name('customer-statements.pdf');
+
+
+    Route::get('/supplier-statements', [SupplierStatementController::class, 'index'])
+        ->middleware('permission:statement.supplier.view')
+        ->name('supplier-statements.index');
+
+    Route::get('/supplier-statements/{supplier}', [SupplierStatementController::class, 'show'])
+        ->middleware('permission:statement.supplier.view')
+        ->name('supplier-statements.show');
+
+    Route::get('/supplier-statements/{supplier}/pdf', [SupplierStatementController::class, 'pdf'])
+        ->middleware('permission:statement.supplier.pdf')
+        ->name('supplier-statements.pdf');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Settings
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/company-settings/edit', [CompanySettingController::class, 'edit'])
+        ->name('company-settings.edit');
+
+    Route::put('/company-settings', [CompanySettingController::class, 'update'])
+        ->name('company-settings.update');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Audit
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/audit-logs', [AuditLogController::class, 'index'])
+        ->middleware('permission:audit-log.view')
+        ->name('audit-logs.index');
+
+    Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])
+        ->middleware('permission:audit-log.view')
+        ->name('audit-logs.show');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Logout
+    |--------------------------------------------------------------------------
+    */
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
-    ->name('logout');
+        ->name('logout');
 });
 
 require __DIR__.'/auth.php';

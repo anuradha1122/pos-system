@@ -158,6 +158,9 @@ class ReportController extends Controller
         $branchId = $request->string('branch_id')->toString();
         $onlyLow = $request->boolean('only_low');
 
+        $setting = \App\Models\CompanySetting::first();
+        $defaultThreshold = (float) ($setting?->low_stock_threshold ?? 5);
+
         $query = \App\Models\BranchProductStock::query()
             ->with(['product:id,name,sku', 'branch:id,name'])
             ->when($search, function ($q) use ($search) {
@@ -167,16 +170,28 @@ class ReportController extends Controller
                 });
             })
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
-            ->when($onlyLow, function ($q) {
-                $q->whereColumn('quantity', '<=', 'reorder_level');
+            ->when($onlyLow, function ($q) use ($defaultThreshold) {
+                $q->whereRaw("
+                    quantity <= CASE
+                        WHEN reorder_level > 0 THEN reorder_level
+                        ELSE ?
+                    END
+                ", [$defaultThreshold]);
             });
 
         $stocks = $query
             ->paginate(15)
             ->withQueryString()
-            ->through(function ($stock) {
+            ->through(function ($stock) use ($defaultThreshold) {
                 $qty = (float) $stock->quantity;
-                $reorder = (float) ($stock->reorder_level ?? 0);
+                $threshold = (float) (
+                    ((float) $stock->reorder_level > 0)
+                        ? $stock->reorder_level
+                        : $defaultThreshold
+                );
+
+                $isLow = $qty <= $threshold;
+                $shortage = $isLow ? max($threshold - $qty, 0) : 0;
 
                 return [
                     'id' => $stock->id,
@@ -184,9 +199,9 @@ class ReportController extends Controller
                     'sku' => $stock->product?->sku,
                     'branch' => $stock->branch?->name,
                     'quantity' => $qty,
-                    'reorder_level' => $reorder,
-                    'is_low' => $qty <= $reorder,
-                    'shortage' => $reorder - $qty,
+                    'reorder_level' => $threshold,
+                    'is_low' => $isLow,
+                    'shortage' => $shortage,
                 ];
             });
 
@@ -198,6 +213,7 @@ class ReportController extends Controller
                 'branch_id' => $branchId,
                 'only_low' => $onlyLow,
             ],
+            'defaultThreshold' => $defaultThreshold,
         ]);
     }
 

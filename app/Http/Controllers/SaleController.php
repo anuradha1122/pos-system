@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\SaleHeader;
 use App\Models\BranchProductStock;
 use App\Services\Sale\SaleService;
+use App\Services\Sale\SaleDocumentService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,8 +15,10 @@ use Illuminate\Http\RedirectResponse;
 
 class SaleController extends Controller
 {
-    public function __construct(protected SaleService $saleService)
-    {
+    public function __construct(
+        protected SaleService $saleService,
+        protected SaleDocumentService $saleDocumentService
+    ) {
     }
 
     public function index(Request $request): Response
@@ -80,34 +83,35 @@ class SaleController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create()
     {
-        $user = auth()->user();
-        $branchId = $user->branch_id;
+        $branchId = auth()->user()->branch_id;
 
-        $customers = Customer::query()
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name', 'phone']);
-
-        $products = BranchProductStock::query()
-            ->with(['product:id,name,sku,selling_price'])
+        $products = \App\Models\BranchProductStock::query()
+            ->with('product:id,name,sku,selling_price,is_active')
             ->where('branch_id', $branchId)
             ->where('quantity', '>', 0)
+            ->whereHas('product', function ($query) {
+                $query->where('is_active', true);
+            })
             ->get()
             ->map(function ($stock) {
                 return [
                     'product_id' => $stock->product_id,
                     'name' => $stock->product?->name,
                     'sku' => $stock->product?->sku,
-                    'available_qty' => (float) $stock->quantity,
-                    'selling_price' => (float) ($stock->product?->selling_price ?? 0),
+                    'selling_price' => $stock->product?->selling_price,
+                    'available_qty' => $stock->quantity,
                 ];
             })
             ->values();
 
-        return Inertia::render('Sales/Create', [
-            'customers' => $customers,
+        return \Inertia\Inertia::render('Sales/Create', [
+            'customers' => \App\Models\Customer::query()
+                ->select('id', 'name', 'phone')
+                ->orderBy('name')
+                ->get(),
+
             'products' => $products,
         ]);
     }
@@ -117,8 +121,19 @@ class SaleController extends Controller
         $sale = $this->saleService->create($request->validated());
 
         return redirect()
-            ->route('sales.show', $sale->id)
+            ->route('sales.thermal-receipt', $sale->id)
             ->with('success', 'Sale completed successfully.');
+    }
+
+    public function thermal(int $sale): Response
+    {
+        $saleData = $this->saleDocumentService->getSaleForDocument($sale);
+
+        return Inertia::render('Sales/ThermalReceipt', [
+            'sale' => $saleData,
+            'totals' => $this->saleDocumentService->buildTotals($saleData),
+            'company' => $this->saleDocumentService->getCompany(),
+        ]);
     }
 
     public function show(SaleHeader $sale): Response

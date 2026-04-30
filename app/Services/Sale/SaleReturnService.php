@@ -3,6 +3,7 @@
 namespace App\Services\Sale;
 
 use App\Models\BranchProductStock;
+use App\Models\Payment;
 use App\Models\SaleHeader;
 use App\Models\SaleItem;
 use App\Models\SaleReturn;
@@ -32,6 +33,9 @@ class SaleReturnService
                 'return_date' => $data['return_date'],
                 'subtotal' => 0,
                 'total_amount' => 0,
+                'refund_amount' => 0,
+                'refund_method' => null,
+                'refund_status' => 'none',
                 'reason' => $data['reason'] ?? null,
                 'created_by' => Auth::id(),
             ]);
@@ -103,10 +107,47 @@ class SaleReturnService
                 $totalAmount += $lineTotal;
             }
 
+            $refundAmount = (float) ($data['refund_amount'] ?? 0);
+
+            if ($refundAmount < 0) {
+                throw ValidationException::withMessages([
+                    'refund_amount' => 'Refund amount cannot be negative.',
+                ]);
+            }
+
+            if ($refundAmount > $totalAmount) {
+                throw ValidationException::withMessages([
+                    'refund_amount' => 'Refund amount cannot exceed return total.',
+                ]);
+            }
+
+            $refundStatus = match (true) {
+                $refundAmount >= $totalAmount && $totalAmount > 0 => 'refunded',
+                $refundAmount > 0 => 'partial',
+                ($data['refund_method'] ?? null) === 'credit' => 'credit',
+                default => 'none',
+            };
+
             $saleReturn->update([
                 'subtotal' => $totalAmount,
                 'total_amount' => $totalAmount,
+                'refund_amount' => $refundAmount,
+                'refund_method' => $data['refund_method'] ?? null,
+                'refund_status' => $refundStatus,
             ]);
+
+            if ($refundAmount > 0) {
+                Payment::create([
+                    'reference_type' => 'sale_return',
+                    'reference_id' => $saleReturn->id,
+                    'branch_id' => $saleReturn->branch_id,
+                    'type' => 'out',
+                    'amount' => $refundAmount,
+                    'method' => $data['refund_method'] ?? 'cash',
+                    'note' => 'Sales return refund: ' . $saleReturn->return_no,
+                    'created_by' => Auth::id(),
+                ]);
+            }
 
             return $saleReturn->load([
                 'sale',

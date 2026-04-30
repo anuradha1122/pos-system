@@ -129,34 +129,31 @@ class PurchaseController extends Controller
                 'id' => $purchase->id,
                 'purchase_no' => $purchase->purchase_no,
                 'invoice_no' => $purchase->invoice_no,
-                'purchase_date' => $purchase->purchase_date?->format('Y-m-d'),
+                'purchase_date' => $purchase->purchase_date,
+
+                'branch' => $purchase->branch,
+                'supplier' => $purchase->supplier,
+                'creator' => $purchase->creator,
+
+                'notes' => $purchase->notes,
+
                 'subtotal' => $purchase->subtotal,
                 'discount' => $purchase->discount,
                 'tax' => $purchase->tax,
                 'grand_total' => $purchase->grand_total,
-                'notes' => $purchase->notes,
-                'branch' => $purchase->branch ? [
-                    'id' => $purchase->branch->id,
-                    'name' => $purchase->branch->name,
-                ] : null,
-                'supplier' => $purchase->supplier ? [
-                    'id' => $purchase->supplier->id,
-                    'name' => $purchase->supplier->name,
-                    'phone' => $purchase->supplier->phone,
-                    'email' => $purchase->supplier->email,
-                    'address' => $purchase->supplier->address,
-                ] : null,
-                'creator' => $purchase->creator ? [
-                    'id' => $purchase->creator->id,
-                    'name' => $purchase->creator->name,
-                ] : null,
+
+                'paid_amount' => $purchase->paid_amount,
+                'balance_amount' => $purchase->balance_amount,
+                'payment_status' => $purchase->payment_status,
+
                 'items' => $purchase->items->map(function ($item) {
                     return [
                         'id' => $item->id,
                         'product_name' => $item->product?->name,
                         'sku' => $item->product?->sku,
                         'quantity' => $item->quantity,
-                        'unit_cost' => $item->unit_cost,
+                        'cost_price' => $item->cost_price,
+                        'unit_cost' => $item->cost_price,
                         'line_total' => $item->line_total,
                     ];
                 })->values(),

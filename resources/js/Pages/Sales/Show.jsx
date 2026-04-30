@@ -13,7 +13,7 @@ export default function Show({ sale }) {
 
             <div className="py-6 print:py-0">
                 <div className="mx-auto max-w-5xl space-y-6 sm:px-6 lg:px-8 print:max-w-full print:px-0">
-                    <div className="flex items-center justify-between print:hidden">
+                    <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
                         <Link
                             href={route('sales.index')}
                             className="rounded-lg border border-gray-300 px-4 py-2 text-sm"
@@ -21,13 +21,31 @@ export default function Show({ sale }) {
                             Back to Sales
                         </Link>
 
-                        <button
-                            type="button"
-                            onClick={() => window.print()}
-                            className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white"
-                        >
-                            Print Receipt
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                onClick={() => window.print()}
+                                className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white"
+                            >
+                                Print Receipt
+                            </button>
+
+                            <Link
+                                href={route('sales.thermal-receipt', sale.id)}
+                                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white"
+                            >
+                                Thermal Receipt
+                            </Link>
+
+                            <a
+                                href={route('sales.invoice-pdf', sale.id)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white"
+                            >
+                                PDF Invoice
+                            </a>
+                        </div>
                     </div>
 
                     <div className="rounded-xl bg-white p-6 shadow print:rounded-none print:shadow-none">

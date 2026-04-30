@@ -12,7 +12,7 @@ use Inertia\Response;
 class PaymentController extends Controller
 {
     public function __construct(
-        protected PaymentService $paymentService
+    protected \App\Services\Payment\PaymentService $paymentService
     ) {
     }
 

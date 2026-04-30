@@ -9,6 +9,17 @@ function formatCurrency(amount) {
     }).format(Number(amount || 0));
 }
 
+function statusBadge(status) {
+    const classes = {
+        refunded: 'bg-green-100 text-green-700',
+        partial: 'bg-yellow-100 text-yellow-700',
+        credit: 'bg-blue-100 text-blue-700',
+        none: 'bg-gray-100 text-gray-700',
+    };
+
+    return classes[status] ?? 'bg-gray-100 text-gray-700';
+}
+
 export default function Show({ saleReturn }) {
     const { auth } = usePage().props;
 
@@ -23,7 +34,9 @@ export default function Show({ saleReturn }) {
                 <div className="mx-auto max-w-5xl space-y-6 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="text-xl font-bold text-slate-900">{saleReturn.return_no}</h3>
+                            <h3 className="text-xl font-bold text-slate-900">
+                                {saleReturn.return_no}
+                            </h3>
                             <p className="text-sm text-gray-500">Sales return receipt</p>
                         </div>
 
@@ -64,7 +77,9 @@ export default function Show({ saleReturn }) {
 
                             <div>
                                 <div className="text-sm text-gray-500">Customer</div>
-                                <div className="font-semibold">{saleReturn.customer?.name ?? 'Walk-in'}</div>
+                                <div className="font-semibold">
+                                    {saleReturn.customer?.name ?? 'Walk-in'}
+                                </div>
                             </div>
 
                             <div>
@@ -74,7 +89,34 @@ export default function Show({ saleReturn }) {
 
                             <div>
                                 <div className="text-sm text-gray-500">Total Amount</div>
-                                <div className="font-semibold">{formatCurrency(saleReturn.total_amount)}</div>
+                                <div className="font-semibold">
+                                    {formatCurrency(saleReturn.total_amount)}
+                                </div>
+                            </div>
+
+                            <div>
+                                <div className="text-sm text-gray-500">Refund Amount</div>
+                                <div className="font-semibold">
+                                    {formatCurrency(saleReturn.refund_amount)}
+                                </div>
+                            </div>
+
+                            <div>
+                                <div className="text-sm text-gray-500">Refund Method</div>
+                                <div className="font-semibold capitalize">
+                                    {saleReturn.refund_method ?? '-'}
+                                </div>
+                            </div>
+
+                            <div>
+                                <div className="text-sm text-gray-500">Refund Status</div>
+                                <span
+                                    className={`inline-flex rounded px-2 py-1 text-xs font-medium capitalize ${statusBadge(
+                                        saleReturn.refund_status ?? 'none'
+                                    )}`}
+                                >
+                                    {saleReturn.refund_status ?? 'none'}
+                                </span>
                             </div>
                         </div>
 
@@ -87,16 +129,28 @@ export default function Show({ saleReturn }) {
                     </div>
 
                     <div className="rounded-xl bg-white p-6 shadow print:shadow-none">
-                        <h3 className="mb-4 text-lg font-semibold text-slate-900">Returned Items</h3>
+                        <h3 className="mb-4 text-lg font-semibold text-slate-900">
+                            Returned Items
+                        </h3>
 
                         <table className="min-w-full divide-y divide-gray-200 border border-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Product</th>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">SKU</th>
-                                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Qty</th>
-                                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Unit Price</th>
-                                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Line Total</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                        Product
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                        SKU
+                                    </th>
+                                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                                        Qty
+                                    </th>
+                                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                                        Unit Price
+                                    </th>
+                                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                                        Line Total
+                                    </th>
                                 </tr>
                             </thead>
 
@@ -106,17 +160,32 @@ export default function Show({ saleReturn }) {
                                         <td className="px-4 py-3">{item.product?.name}</td>
                                         <td className="px-4 py-3">{item.product?.sku}</td>
                                         <td className="px-4 py-3 text-right">{item.quantity}</td>
-                                        <td className="px-4 py-3 text-right">{formatCurrency(item.unit_price)}</td>
-                                        <td className="px-4 py-3 text-right">{formatCurrency(item.line_total)}</td>
+                                        <td className="px-4 py-3 text-right">
+                                            {formatCurrency(item.unit_price)}
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            {formatCurrency(item.line_total)}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
 
                             <tfoot>
                                 <tr>
-                                    <td colSpan="4" className="px-4 py-3 text-right font-bold">Total</td>
+                                    <td colSpan="4" className="px-4 py-3 text-right font-bold">
+                                        Total
+                                    </td>
                                     <td className="px-4 py-3 text-right font-bold">
                                         {formatCurrency(saleReturn.total_amount)}
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td colSpan="4" className="px-4 py-3 text-right font-bold">
+                                        Refund Amount
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-bold">
+                                        {formatCurrency(saleReturn.refund_amount)}
                                     </td>
                                 </tr>
                             </tfoot>

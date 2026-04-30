@@ -21,7 +21,7 @@ class SupplierCreditController extends Controller
         $suppliers = Supplier::query()
             ->withSum(['purchases as total_credit_purchases' => function ($query) {
                 $query->where('balance_amount', '>', 0);
-            }], 'total_amount')
+            }], 'grand_total')
             ->withSum(['purchases as total_paid' => function ($query) {
                 $query->where('balance_amount', '>', 0);
             }], 'paid_amount')

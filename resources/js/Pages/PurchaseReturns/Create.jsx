@@ -14,6 +14,8 @@ export default function Create({ auth, purchases }) {
         return_date: new Date().toISOString().slice(0, 10),
         reason: '',
         items: [],
+        refund_amount: '',
+        refund_method: 'cash',
     });
 
     const selectPurchase = (id) => {
@@ -24,6 +26,8 @@ export default function Create({ auth, purchases }) {
         setData({
             ...data,
             purchase_header_id: id,
+            refund_amount: data.refund_amount,
+            refund_method: data.refund_method,
             items:
                 purchase?.items?.map((item) => ({
                     purchase_item_id: item.id,
@@ -41,6 +45,10 @@ export default function Create({ auth, purchases }) {
         updatedItems[index].quantity = quantity;
         setData('items', updatedItems);
     };
+
+    const total = data.items.reduce((sum, item) => {
+        return sum + Number(item.quantity || 0) * Number(item.cost_price || 0);
+    }, 0);
 
     const submit = (e) => {
         e.preventDefault();
@@ -121,6 +129,7 @@ export default function Create({ auth, purchases }) {
                                         <th className="p-3 text-right">Purchased Qty</th>
                                         <th className="p-3 text-right">Cost Price</th>
                                         <th className="p-3 text-right">Return Qty</th>
+                                        <th className="p-3 text-right">Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -137,6 +146,7 @@ export default function Create({ auth, purchases }) {
                                                 <input
                                                     type="number"
                                                     min="0"
+                                                    max={item.purchased_quantity}
                                                     step="0.01"
                                                     value={item.quantity}
                                                     onChange={(e) =>
@@ -144,6 +154,13 @@ export default function Create({ auth, purchases }) {
                                                     }
                                                     className="w-28 rounded border-gray-300 text-right"
                                                 />
+                                            </td>
+                                            <td className="p-3 text-right">
+                                                Rs.{' '}
+                                                {(
+                                                    Number(item.quantity || 0) *
+                                                    Number(item.cost_price || 0)
+                                                ).toFixed(2)}
                                             </td>
                                         </tr>
                                     ))}
@@ -153,8 +170,59 @@ export default function Create({ auth, purchases }) {
                             {errors.items && (
                                 <div className="mt-2 text-sm text-red-600">{errors.items}</div>
                             )}
+
+                            <div className="mt-4 rounded bg-gray-50 p-4 text-right">
+                                <div className="text-sm text-gray-500">Total Return Amount</div>
+                                <div className="text-2xl font-bold">
+                                    Rs. {Number(total).toFixed(2)}
+                                </div>
+                            </div>
                         </div>
                     )}
+
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                            <label className="mb-1 block text-sm font-medium">
+                                Refund Amount
+                            </label>
+                            <input
+                                type="number"
+                                min="0"
+                                max={total}
+                                step="0.01"
+                                value={data.refund_amount}
+                                onChange={(e) => setData('refund_amount', e.target.value)}
+                                className="w-full rounded border-gray-300"
+                                placeholder="0.00"
+                            />
+                            {errors.refund_amount && (
+                                <div className="mt-1 text-sm text-red-600">
+                                    {errors.refund_amount}
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="mb-1 block text-sm font-medium">
+                                Refund Method
+                            </label>
+                            <select
+                                value={data.refund_method}
+                                onChange={(e) => setData('refund_method', e.target.value)}
+                                className="w-full rounded border-gray-300"
+                            >
+                                <option value="cash">Cash</option>
+                                <option value="card">Card</option>
+                                <option value="bank">Bank</option>
+                                <option value="credit">Credit</option>
+                            </select>
+                            {errors.refund_method && (
+                                <div className="mt-1 text-sm text-red-600">
+                                    {errors.refund_method}
+                                </div>
+                            )}
+                        </div>
+                    </div>
 
                     <button
                         type="submit"

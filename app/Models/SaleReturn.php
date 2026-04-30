@@ -17,6 +17,9 @@ class SaleReturn extends Model
         'subtotal',
         'total_amount',
         'reason',
+        'refund_amount',
+        'refund_method',
+        'refund_status',
         'created_by',
     ];
 

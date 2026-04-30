@@ -7,17 +7,41 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\SaleHeader;
 use App\Models\StockMovement;
+use App\Models\CompanySetting;
+use App\Models\DailyClosing;
+use App\Services\AuditLog\AuditLogService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class SaleService
 {
+    public function __construct(
+        protected AuditLogService $auditLogService
+    ) {
+    }
+
     public function create(array $data): SaleHeader
     {
         return DB::transaction(function () use ($data) {
             $user = Auth::user();
             $branchId = $user->branch_id;
+
+            $setting = CompanySetting::first();
+
+            if ($setting?->prevent_sale_after_closing) {
+                $isClosed = DailyClosing::query()
+                    ->where('branch_id', $branchId)
+                    ->whereDate('closing_date', $data['sale_date'])
+                    ->where('status', 'finalized')
+                    ->exists();
+
+                if ($isClosed) {
+                    throw ValidationException::withMessages([
+                        'sale_date' => 'Sales are blocked because daily closing is finalized for this date.',
+                    ]);
+                }
+            }
 
             if (!$branchId) {
                 throw ValidationException::withMessages([
@@ -151,20 +175,36 @@ class SaleService
                     'type' => 'in',
                     'amount' => $paidAmount,
                     'method' => $data['payment_method'] ?? 'cash',
+                    'payment_date' => $sale->sale_date,
                     'note' => 'Sale payment: ' . $sale->invoice_no,
                     'created_by' => $user->id,
                 ]);
             }
 
-            return $sale->load(['items.product', 'customer', 'branch', 'creator']);
+            $sale->load(['items.product', 'customer', 'branch', 'creator']);
+
+            $this->auditLogService->log(
+                action: 'created',
+                module: 'sale',
+                auditable: $sale,
+                oldValues: null,
+                newValues: $sale->toArray()
+            );
+
+            return $sale;
         });
     }
 
     protected function generateInvoiceNo(): string
     {
+        $setting = CompanySetting::first();
+
+        $prefix = $setting?->invoice_prefix ?: 'INV';
+
         $date = now()->format('Ymd');
+
         $lastId = SaleHeader::max('id') ?? 0;
 
-        return 'INV-' . $date . '-' . str_pad($lastId + 1, 5, '0', STR_PAD_LEFT);
+        return $prefix . '-' . $date . '-' . str_pad($lastId + 1, 5, '0', STR_PAD_LEFT);
     }
 }
