@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use App\Models\CompanySetting;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -29,16 +30,32 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return array_merge(parent::share($request), [
             'auth' => [
-                'user' => $request->user(),
-                'roles' => $request->user()?->getRoleNames()->toArray() ?? [],
-                'permissions' => $request->user()?->getAllPermissions()->pluck('name')->toArray() ?? [],
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'branch_id' => $user->branch_id,
+                    'branch' => $user->branch ? [
+                        'id' => $user->branch->id,
+                        'name' => $user->branch->name,
+                    ] : null,
+                ] : null,
+
+                // IMPORTANT: keep this for Sidebar visibility
+                'permissions' => $user
+                    ? $user->getAllPermissions()->pluck('name')->toArray()
+                    : [],
+
+                'roles' => $user
+                    ? $user->getRoleNames()->toArray()
+                    : [],
             ],
-            'flash' => [
-                'success' => fn () => $request->session()->get('success'),
-                'error' => fn () => $request->session()->get('error'),
-            ],
+
+            'company' => CompanySetting::first(),
         ]);
     }
 }

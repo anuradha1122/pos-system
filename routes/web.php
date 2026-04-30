@@ -33,7 +33,8 @@ use App\Http\Controllers\{
     AuditLogController,
     CompanySettingController,
     CustomerStatementController,
-    SupplierStatementController
+    SupplierStatementController,
+    WelcomeController
 };
 
 use App\Http\Controllers\ReportController;
@@ -51,6 +52,8 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 | Routes
 |--------------------------------------------------------------------------
 */
+
+Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
 
 Route::middleware(['auth'])->group(function () {
 
