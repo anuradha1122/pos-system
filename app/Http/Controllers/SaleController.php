@@ -88,7 +88,7 @@ class SaleController extends Controller
         $branchId = auth()->user()->branch_id;
 
         $products = \App\Models\BranchProductStock::query()
-            ->with('product:id,name,sku,selling_price,is_active')
+            ->with('product:id,name,sku,barcode,selling_price,is_active')
             ->where('branch_id', $branchId)
             ->where('quantity', '>', 0)
             ->whereHas('product', function ($query) {
@@ -100,6 +100,7 @@ class SaleController extends Controller
                     'product_id' => $stock->product_id,
                     'name' => $stock->product?->name,
                     'sku' => $stock->product?->sku,
+                    'barcode' => $stock->product?->barcode,
                     'selling_price' => $stock->product?->selling_price,
                     'available_qty' => $stock->quantity,
                 ];
